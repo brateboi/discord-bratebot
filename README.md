@@ -7,7 +7,11 @@ This discord bot can play music in voice channels. Users can play songs with you
 It uses Discord.js, FFMPEG and ytdl to play youtube videos
 
 ## Installation
-Currently only supports locally run server.
+
+It is assumed you have already created a discord bot on [Discord Application Portal](https://discord.com/developers/applications).
+Create a bot and come back here.
+
+### Currently only supports locally run server.
 
 Dependencies:
 ```bash
@@ -26,3 +30,19 @@ run the bot
 ```bash
 node index.js
 ```
+
+## Usage
+After you have run
+```bash
+node index.js
+```
+the bot should appear online in your server. Use play
+```bash
+$play https://www.youtube.com/watch?v=dQw4w9WgXcQ
+$skip #skips the current song
+$stop #stops the music player and leaves the voice channel
+```
+
+## Author
+[brateboi](https://github.com/brateboi/)
+
