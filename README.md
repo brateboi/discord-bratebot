@@ -16,6 +16,7 @@ Create a bot and come back here.
 Dependencies:
 ```bash
 npm install discord.js ffmpeg fluent-ffmpeg @discordjs/opus ytdl-core ffmpeg-static --save 
+npm install --save ytsr
 ```
 
 Add a config.json:
@@ -38,7 +39,7 @@ node index.js
 ```
 the bot should appear online in your server. Use play
 ```bash
-$play https://www.youtube.com/watch?v=dQw4w9WgXcQ
+$play https://www.youtube.com/watch?v=dQw4w9WgXcQ #plays this song from youtube
 $skip #skips the current song
 $stop #stops the music player and leaves the voice channel
 ```

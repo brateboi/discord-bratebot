@@ -3,6 +3,7 @@ const {
     prefix, token,
 } = require('./config.json');
 const ytdl = require('ytdl-core');
+const ytsr = require('ytsr');
 
 
 const client = new Discord.Client();
@@ -20,19 +21,20 @@ client.once('disconnect', () => {
 
 const queue = new Map();
 
+
 client.on('message', async message => {
     if (message.author.bot) return;
     if (!message.content.startsWith(prefix)) return;
 
     // only accept messages of people with appropriate permissions
-    if (!message.member.roles.cache.some(role => role.name === 'Demi God of all')) return;
+    if (!message.member.roles.cache.some(role => role.name === 'Demi God of all'  || role.name ==='AlexaLover')) return;
 
     const serverQueue = queue.get(message.guild.id);
 
     if (message.content.startsWith(`${prefix}test`)) {
         message.channel.send("Test message successful");
     } else if (message.content.startsWith(`${prefix}play`)){
-        execute(message, serverQueue);
+        handleSearch(message, serverQueue);
         return;
     } else if (message.content.startsWith(`${prefix}skip`)){
         skip(message, serverQueue);
@@ -40,6 +42,9 @@ client.on('message', async message => {
     } else if (message.content.startsWith(`${prefix}stop`)){
         stop(message, serverQueue);
         return;
+    } else if (message.content.startsWith(`${prefix}cleanup`)){
+            clean(message);
+            return;
     } else {
         message.channel.send("Use valid commands!")
     }
@@ -108,7 +113,7 @@ function play(guild, song) {
     }
 
     const dispatcher = serverQueue.connection
-        .play(ytdl(song.url))
+        .play(ytdl(song.url, {filter: 'audioonly'})) // stream only audio
         .on("finish", () => {
             serverQueue.songs.shift();
             play(guild, serverQueue.songs[0]) // recursive function call
@@ -135,4 +140,71 @@ function stop(message, serverQueue) {
     const voiceChannel = message.member.voice.channel;
 }
 
+async function handleSearch(message, serverQueue) {
+    if (message.content.startsWith(`${prefix}play https://www.youtube.com/watch?v=`)){
+        execute(message, serverQueue);
+    } else { // handle query parameter
+        const query = message.content.substr(message.content.indexOf(' ')+1);
+        console.log(query);
 
+        const filterQuery = await ytsr.getFilters(query);
+        const filterVideo = filterQuery.get('Type').get('Video');
+
+        const results = await ytsr( filterVideo.url, {limit: 5});
+
+        //display found results
+        let reply = "Choose the song you want to play"
+        reply = reply.concat("\`\`\`");
+        let i = 0;
+        results.items.forEach(element => {
+            i++;
+            reply = reply.concat(i + ": " + element.title + "\n");
+        });
+        reply = reply.concat("\`\`\`")
+
+        filter = (reaction, user) => {
+            return ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣'].includes(reaction.emoji.name) && user.id == message.author;
+        };
+
+        message.channel.send(reply)
+            .then( msg => {
+                msg.react("1️⃣").then(()=> msg.react("2️⃣")).then(()=> msg.react("3️⃣"))
+                .then(()=> msg.react("4️⃣")).then(()=> msg.react("5️⃣"));
+                
+                msg.awaitReactions(filter, { max: 1, time: 10000, errors: ['time']})
+                    .then(collected => {
+                        const reaction = collected.first();
+                        let url = ""
+                        if (reaction.emoji.name === "1️⃣") {
+                            url = results.items[0].url;
+                        } else if (reaction.emoji.name === "2️⃣") {
+                            url = results.items[1].url;
+                        } else if (reaction.emoji.name === "3️⃣") {
+                            url = results.items[2].url;
+                        } else if (reaction.emoji.name === "4️⃣") {
+                            url = results.items[3].url;
+                        } else {
+                            url = results.items[4].url;
+                        }
+                        message.content = `${prefix}play ${url}`;
+                        execute(message, serverQueue);
+                        msg.delete();
+                    }).catch(collected => {
+                        console.log('no reaction');
+                        msg.delete();
+                    })
+            });
+    }
+}
+
+async function clean(message) {
+    const messages = await message.channel.messages.fetch({limit: 100});
+    let i = 0;
+    messages.forEach(msg => {
+        if (msg.content.startsWith(`${prefix}`) || msg.author.bot) {
+            i++;
+            msg.delete();
+        }
+    });
+    message.channel.send(`**Cleared** ${i} messages from bratebot`);
+}
