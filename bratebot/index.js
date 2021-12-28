@@ -1,10 +1,11 @@
-const Discord = require('discord.js');
+require('dotenv').config();
 const {
-    prefix, token,
-} = require('./config.json');
+    prefix, token
+} = {"prefix": process.env.PREFIX, "token": process.env.TOKEN};
+
 const ytdl = require('ytdl-core');
 const ytsr = require('ytsr');
-
+const Discord = require('discord.js');
 
 const client = new Discord.Client();
 client.login(token);
@@ -99,7 +100,6 @@ async function execute(message, serverQueue) {
         }
     } else {
         serverQueue.songs.push(song);
-        // console.log(serverQueue.songs);
         return message.channel.send(`${song.title} has been added to the queue!`);
     }
 }
@@ -188,10 +188,10 @@ async function handleSearch(message, serverQueue) {
                         }
                         message.content = `${prefix}play ${url}`;
                         execute(message, serverQueue);
-                        msg.delete();
+                        // msg.delete();
                     }).catch(collected => {
                         console.log('no reaction');
-                        msg.delete();
+                        // msg.delete();
                     })
             });
     }

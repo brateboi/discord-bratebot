@@ -13,6 +13,10 @@ Create a bot and come back here.
 
 ### Currently only supports locally run server.
 
+```bash
+npm init
+```
+
 Dependencies:
 ```bash
 npm install discord.js ffmpeg fluent-ffmpeg @discordjs/opus ytdl-core ffmpeg-static --save 
