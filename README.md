@@ -20,15 +20,13 @@ npm init
 Dependencies:
 ```bash
 npm install discord.js ffmpeg fluent-ffmpeg @discordjs/opus ytdl-core ffmpeg-static --save 
-npm install --save ytsr
+npm install --save ytsr dotenv
 ```
 
-Add a config.json:
-```json
-{
-    "prefix": "DESIRED-PREFIX e.g. $",
-    "token": "YOUR-DISCORD-BOT-TOKEN"
-}
+Add a .env file:
+```env
+PREFIX = <DESIRED-PREFIX> e.g. $
+TOKEN = <YOUR-DISCORD-BOT-TOKEN>
 ```
 
 run the bot
