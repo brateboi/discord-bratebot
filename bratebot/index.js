@@ -44,8 +44,14 @@ client.on('message', async message => {
         stop(message, serverQueue);
         return;
     } else if (message.content.startsWith(`${prefix}cleanup`)){
-            clean(message);
-            return;
+        clean(message);
+        return;
+    } else if (message.content.startsWith(`${prefix}shuffle`)){
+        shuffle(message, serverQueue);
+        return;
+    } else if (message.content.startsWith(`${prefix}queue`)){
+        showQueue(message, serverQueue);
+        return;
     } else {
         message.channel.send("Use valid commands!")
     }
@@ -66,9 +72,11 @@ async function execute(message, serverQueue) {
 
     // get song info
     const songInfo = await ytdl.getInfo(args[1]);
+    // console.log(songInfo);
     const song = {
         title: songInfo.videoDetails.title,
         url: songInfo.videoDetails.video_url,
+        duration: songInfo.videoDetails.lengthSeconds,
     };
 
     if (!serverQueue) {
@@ -120,15 +128,16 @@ function play(guild, song) {
         })
         .on("error", error => console.error(error));
     dispatcher.setVolumeLogarithmic(serverQueue.volume / 5);
-    serverQueue.textChannel.send(`Playing: **${song.title}**`);
+    serverQueue.textChannel.send(`Playing: **${song.title}** | ${song.duration} seconds`);
 }
 
 function skip(message, serverQueue) {
     if (!message.member.voice.channel) return message.channel.send("You must be in a voice channel to skip music");
 
     if (!serverQueue) return message.channel.send("No song to skip");
-    
-    serverQueue.connection.dispatcher.end();    
+    serverQueue.connection.dispatcher.end();
+    message.channel.send("Skipped! ⏭");
+
 }
 
 function stop(message, serverQueue) {
@@ -137,7 +146,7 @@ function stop(message, serverQueue) {
 
     serverQueue.songs = [];
     serverQueue.connection.dispatcher.end();
-    const voiceChannel = message.member.voice.channel;
+    message.channel.send("Stopped music! ⏹");
 }
 
 async function handleSearch(message, serverQueue) {
@@ -188,11 +197,13 @@ async function handleSearch(message, serverQueue) {
                         }
                         message.content = `${prefix}play ${url}`;
                         execute(message, serverQueue);
-                        // msg.delete();
                     }).catch(collected => {
-                        console.log('no reaction');
-                        // msg.delete();
+                        const url = results.items[0].url;
+                        message.content = `${prefix}play ${url}`;
+                        execute(message, serverQueue);
+                        console.log('no reaction, playing first search result');
                     })
+                setTimeout( () => msg.delete(), 10000); // delete message after 10 seconds
             });
     }
 }
@@ -208,3 +219,34 @@ async function clean(message) {
     });
     message.channel.send(`**Cleared** ${i} messages from bratebot`);
 }
+
+function shuffle(message, serverQueue) {
+    if (!serverQueue) message.channel.send("No songs to shuffle!");
+    temp = serverQueue.songs.slice(1);
+    temp.shuffle();
+    first = serverQueue.songs.slice(0,1);
+    serverQueue.songs = first.concat(temp);
+    message.channel.send("🔀️**Shuffled** the queue");
+}
+
+function showQueue(message, serverQueue) {
+    if (!serverQueue) message.channel.send("Nothing in the queue");
+
+    result = "";
+    i=0;
+    serverQueue.songs.forEach(song => {
+        i++;
+        result += `${i}: ${song.title} | ${song.duration} seconds \n`;
+    })
+    message.channel.send(result);
+}
+
+Object.defineProperty(Array.prototype, 'shuffle', {
+    value: function() {
+        for (let i = this.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [this[i], this[j]] = [this[j], this[i]];
+        }
+        return this;
+    }
+});
