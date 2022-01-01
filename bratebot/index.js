@@ -6,6 +6,7 @@ const {
 const ytdl = require('ytdl-core');
 const ytsr = require('ytsr');
 const Discord = require('discord.js');
+const gTTS = require('gtts');
 
 const client = new Discord.Client();
 client.login(token);
@@ -49,6 +50,10 @@ client.on('message', async message => {
     } else if (message.content.startsWith(`${prefix}shuffle`)){
         shuffle(message, serverQueue);
         return;
+    } else if (message.content.startsWith(`${prefix}say`)){
+
+        do_tts(message);
+        return;
     } else if (message.content.startsWith(`${prefix}queue`)){
         showQueue(message, serverQueue);
         return;
@@ -56,6 +61,7 @@ client.on('message', async message => {
         message.channel.send("Use valid commands!")
     }
 })
+
 
 async function execute(message, serverQueue) {
     const args = message.content.split(" ");
@@ -250,3 +256,32 @@ Object.defineProperty(Array.prototype, 'shuffle', {
         return this;
     }
 });
+
+
+async function do_tts(message) {
+    const text = message.content.substr(message.content.indexOf(' ')+1);
+    var speech = new gTTS(text, 'de');
+
+    speech.save('text.mp3', (err) => {
+        if (err) { throw new Error(err);}
+    })
+
+    // Try to join voice channel
+    const voiceChannel = message.member.voice.channel;
+    if (!voiceChannel) return message.channel.send("Join a voice channel to say text");
+
+    const permissions = voiceChannel.permissionsFor(message.client.user);
+    if (!permissions.has("CONNECT") || !permissions.has("SPEAK")) {
+        return message.channel.send(
+            "I need permissions to join and speak in your voice channel!"
+        );
+    }
+
+    var connection = await voiceChannel.join();
+    const dispatcher = connection.play('text.mp3')
+    .on('finish', () => 
+        voiceChannel.leave()
+    ).on("error", error => console.error(error))
+    dispatcher.setVolumeLogarithmic(1);
+
+}

@@ -4,3 +4,6 @@
 # config file
 config.json
 .env
+
+# tts file
+text.mp3
